@@ -1,0 +1,18 @@
+data:
+  train_dir: /path/to/train_data
+  val_dir: /path/to/validation_data
+
+training:
+  batch_size: 32
+  max_epochs: 10
+
+model:
+  learning_rate: 0.001
+
+checkpoint:
+  path: saved_models/
+
+experiment_name: animal_classification
+
+mlflow:
+  tracking_uri: file:///path/to/mlflow

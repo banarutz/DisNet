@@ -1,0 +1,6 @@
+pytorch-lightning
+hydra-core
+mlflow
+
+# pip3 install torch torchvision torchaudio
+# python -m pip install --upgrade pip
