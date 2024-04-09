@@ -1,5 +1,5 @@
 data:
-  train_dir: /path/to/train_data
+  train_dir: C:\Users\sbanaru\Desktop\DisNet\DisNet\dataset\prepared_data
   val_dir: /path/to/validation_data
 
 training:

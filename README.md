@@ -15,3 +15,5 @@ https://pytorch.org/
 ### Upgrade pip
 python -m pip install --upgrade pip
 
+### Download dataset and place it into project folder
+https://www.kaggle.com/datasets/zippyz/cats-and-dogs-breeds-classification-oxford-dataset?resource=download
