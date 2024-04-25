@@ -3,23 +3,21 @@ from PIL import Image, ImageDraw, ImageFont
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch
+import numpy as np
 import argparse
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
+from main_training import AnimalClassifier
 
-def validate(model, val_data, num_samples=5, checkpoint_path=None):
-    if checkpoint_path:
-        checkpoint = torch.load(checkpoint_path)
-        model.load_state_dict(checkpoint['state_dict'])
-    model.eval()
 
-    # Select random images from validation set
+def validate(model, val_data, num_samples=5):
+    
     val_loader = DataLoader(val_data, batch_size=num_samples, shuffle=True)
     images, labels = next(iter(val_loader))
 
     # Make predictions
     with torch.no_grad():
-        outputs = model(images)
+        outputs = model(images.cuda())
         _, predicted = torch.max(outputs, 1)
 
     # Get class labels
@@ -27,9 +25,15 @@ def validate(model, val_data, num_samples=5, checkpoint_path=None):
 
     # Display predictions on images
     for i in range(num_samples):
-        image = images[i].permute(1, 2, 0).numpy()
-        image = (image * 255).astype('uint8')
-        image_pil = Image.fromarray(image)
+        invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                     std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                     std = [ 1., 1., 1. ]),
+                               ])
+        inv_tensor = invTrans(images[i])
+        image = inv_tensor.permute(1, 2, 0).numpy()
+        image = np.uint8(image * 255)
+        image_pil = Image.fromarray(image)  
 
         # Add predicted label and true label to image
         predicted_label = class_labels[predicted[i]]
@@ -45,8 +49,7 @@ def validate(model, val_data, num_samples=5, checkpoint_path=None):
 
 def main(data_dir, checkpoint_path, num_samples=5):
     # Load the model
-    checkpoint = torch.load(checkpoint_path)
-    model = checkpoint['state_dict']
+    model = torch.load(checkpoint_path)
     
     # Load the validation dataset
     transform = transforms.Compose([
@@ -68,7 +71,7 @@ if __name__ == "__main__":
                         help='Path to the data directory')
     parser.add_argument('--checkpoint_path', 
                         type=str, 
-                        default="/home/sbanaru/Desktop/DisNet/saved_models/epoch=9-val_loss=1.06.ckpt",
+                        default="/home/sbanaru/Desktop/DisNet/saved_models/best_model.pt",
                         help='Path to the .ckpt model file')
     parser.add_argument('--num_samples', 
                         type=int, 
