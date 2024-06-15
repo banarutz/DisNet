@@ -1,17 +1,17 @@
 data:
-  train_dir: /home/sbanaru/Desktop/DisNet/dataset/split_ds/train
-  val_dir: /home/sbanaru/Desktop/DisNet/dataset/split_ds/val
+  train_dir: ./dataset/split_ds/train
+  val_dir: ./dataset/split_ds/val
 
 training:
   batch_size: 32
-  max_epochs: 2
-  seed: 69
+  max_epochs: 30
+  seed: 2000
 
 model:
   learning_rate: 0.0005
 
 checkpoint:
-  path: saved_models/
+  path: ./saved_models/
 
 experiment_name: animal_classification
 
