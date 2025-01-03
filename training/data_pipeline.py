@@ -49,14 +49,11 @@ class CustomImageDataset(Dataset):
         gt_file_path = self.gt_files[idx]
         noisy_file_path = gt_file_path.replace('_gt_patch_', '_noisy_patch_')
 
-        # Încarcă patch-urile GT și NOISY din fișierele .npy
-        gt_patch = np.load(gt_file_path)
-        noisy_patch = np.load(noisy_file_path)
+        gt_patch = torch.tensor(np.load(gt_file_path), dtype=torch.float32)
+        noisy_patch = torch.tensor(np.load(noisy_file_path), dtype=torch.float32)
 
-        # Aplică transformările, dacă sunt specificate
         if self.transform:
             gt_patch = self.transform(gt_patch)
             noisy_patch = self.transform(noisy_patch)
-
-        # Convertește la tensori Torch
-        return torch.tensor(gt_patch, dtype=torch.float32), torch.tensor(noisy_patch, dtype=torch.float32)
+    
+        return gt_patch, noisy_patch

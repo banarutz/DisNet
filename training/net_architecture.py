@@ -10,7 +10,7 @@ class DnCNN(LightningModule):
         # Arhitectura DnCNN
         layers = []
         # Primul strat convoluțional
-        layers.append(nn.Conv2d(1, 64, kernel_size=3, padding=1))
+        layers.append(nn.Conv2d(3, 64, kernel_size=3, padding=1))
         layers.append(nn.ReLU(inplace=True))
         
         # Straturi convoluționale intermediare cu normalizare batch
@@ -20,7 +20,7 @@ class DnCNN(LightningModule):
             layers.append(nn.ReLU(inplace=True))
         
         # Ultimul strat convoluțional (fără activare sau normalizare)
-        layers.append(nn.Conv2d(64, 1, kernel_size=3, padding=1))
+        layers.append(nn.Conv2d(64, 3, kernel_size=3, padding=1))
         
         self.model = nn.Sequential(*layers)
 

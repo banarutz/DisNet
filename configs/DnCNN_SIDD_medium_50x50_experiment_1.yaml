@@ -1,0 +1,20 @@
+data:
+  root_dir: /media/smbanaru/9bf28602-242e-4916-960b-479e4c5d241e/datasets/SIDD_medium_50x50_patches/
+
+training:
+  batch_size: 256
+  max_epochs: 50
+  seed: 69
+  num_workers: 4
+
+model:
+  num_layers: 17
+  learning_rate: 0.001
+
+checkpoint:
+  path: saved_models/
+
+experiment_name: animal_classification
+
+mlflow:
+   tracking_uri: http://localhost:5000
