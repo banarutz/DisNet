@@ -1,0 +1,24 @@
+data:
+  root_dir: /media/smbanaru/9bf28602-242e-4916-960b-479e4c5d241e/datasets/SIDD_small_50x50_patches_v2/
+  resume: False
+  
+training:
+  batch_size: 32
+  max_epochs: 32
+  seed: 69
+  num_workers: 12
+
+model:
+  num_layers: 17
+  learning_rate: 0.001
+
+checkpoint:
+  path: saved_models/
+  filename: DnCNN_SIDD_small_50x50_experiment_1
+
+experiment_name: DnCNN_SIDD_small_50x50_experiment_1
+
+mlflow:
+   tracking_uri: http://127.0.0.1:8082
+   host: 127.0.0.1
+   port: 8082

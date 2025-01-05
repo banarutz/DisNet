@@ -1,11 +1,11 @@
 data:
   root_dir: /media/smbanaru/9bf28602-242e-4916-960b-479e4c5d241e/datasets/SIDD_medium_50x50_patches/
-
+  resume: /home/smbanaru/Desktop/DisNet/saved_models/best_model-v1.ckpt
 training:
   batch_size: 256
-  max_epochs: 50
+  max_epochs: 10
   seed: 69
-  num_workers: 4
+  num_workers: 12
 
 model:
   num_layers: 17
@@ -13,8 +13,9 @@ model:
 
 checkpoint:
   path: saved_models/
+  filename: DnCNN_SIDD_medium_50x50_experiment_1
 
-experiment_name: animal_classification
+experiment_name: DnCNN_SIDD_medium_50x50_experiment_1
 
 mlflow:
-   tracking_uri: http://localhost:5000
+   tracking_uri: http://127.0.0.1:8082

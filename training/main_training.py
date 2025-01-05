@@ -14,36 +14,48 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 import subprocess
 
 from net_architecture import DnCNN
-from data_pipeline import CustomImageDataset
+from data_pipeline import CustomImageDataset 
+from utils import *
 
 
-@hydra.main(config_path="../configs", config_name="DnCNN_SIDD_medium_50x50_experiment_1")
+@hydra.main(config_path="../configs", config_name="DnCNN_SIDD_small_50x50_experiment_1")
 def train_model(cfg):
     seed_everything(cfg.training.seed)
 
     # Define transformations
     transform = transforms.Compose([
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-])
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    ])
 
     # Create data loaders
     train_dataset = CustomImageDataset(root_dir=cfg.data.root_dir, split="train", transform=transform, seed=cfg.training.seed)
     val_dataset = CustomImageDataset(root_dir=cfg.data.root_dir, split="val", transform=transform, seed=cfg.training.seed)
-    
+
     train_loader = DataLoader(train_dataset, batch_size=cfg.training.batch_size, shuffle=True, num_workers=cfg.training.num_workers)
     val_loader = DataLoader(val_dataset, batch_size=cfg.training.batch_size, num_workers=cfg.training.num_workers)
 
     # Initialize the model
-    model = DnCNN(cfg.model)
+    if cfg.data.resume:
+        print(f"Resuming training from checkpoint: {cfg.data.resume}")
+        model = DnCNN.load_from_checkpoint(cfg.data.resume, strict=False)
+    else:
+        print("Starting training from scratch.")
+        model = DnCNN(cfg.model)
 
     # Initialize MLFlow logger
-    try:
-        subprocess.Popen(["mlflow", "server", "--host", "127.0.0.1", "--port", "8081"])
+    if is_port_in_use(cfg.mlflow.host, cfg.mlflow.port):
+        print("MLFlow server is already running.")
         mlflow_logger = MLFlowLogger(experiment_name=cfg.experiment_name, tracking_uri=cfg.mlflow.tracking_uri)
-        mlflow_logger.log_hyperparams(cfg)
-    except Exception as e:
-        print(f"Failed to start MLFlow server: {e}")
-    # mlflow_logger = None
+    else:
+        print("Starting MLFlow server.")
+        try:
+            subprocess.Popen(["mlflow", "server", "--host", "127.0.0.1", "--port", "8082"])
+            mlflow_logger = MLFlowLogger(experiment_name=cfg.experiment_name, tracking_uri=cfg.mlflow.tracking_uri)
+            mlflow_logger.log_hyperparams(cfg)
+        except Exception as e:
+            print(f"Failed to start MLFlow server: {e}")
+            mlflow_logger = None
 
     # Configure model checkpoint callback to save only the best model
     checkpoint_callback = ModelCheckpoint(
@@ -58,6 +70,7 @@ def train_model(cfg):
     # Initialize LR monitor
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
     torch.set_float32_matmul_precision("medium")
+
     print("----------------- Starting training -----------------") 
     # Train the model
     trainer = Trainer(
@@ -68,29 +81,25 @@ def train_model(cfg):
         callbacks=[checkpoint_callback, lr_monitor],
     )
     trainer.fit(model, train_loader, val_loader)
-
-    # # Load the best model and save as .pt
-    # best_model_path = os.path.join("/home/sbanaru/Desktop/DisNet/saved_models/best_model.ckpt")
-    # best_model = AnimalClassifier.load_from_checkpoint(
-    #     best_model_path,
-    #     )
-    # model_save_path = os.path.join("/home/sbanaru/Desktop/DisNet/saved_models/", 'best_model.pt')
-    # torch.save(best_model, model_save_path)
-
-# @hydra.main(config_path="../configs", config_name="experiment_1")
-# def save_best_model(cfg):
-#     transform = transforms.Compose([
-#         transforms.Resize((224, 224)),
-#         transforms.ToTensor(),
-#         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-#     ])
-#     train_data = ImageFolder(root=cfg.data.train_dir, transform=transform)
-#     model = AnimalClassifier(cfg.model, num_classes=len(train_data.classes))
-#     best_model_path = os.path.join("/home/sbanaru/Desktop/DisNet/saved_models/best_model.ckpt")
-#     best_model = model.load_from_checkpoint(best_model_path)
-#     model_save_path = os.path.join("/home/sbanaru/Desktop/DisNet/saved_models/", 'best_model.pt')
-#     torch.save(best_model.state_dict(), model_save_path)
-
+    
+    print("----------------- Training finished -----------------")
+    print("----------------- Exporting model -----------------")
+    
+    model = DnCNN.load_from_checkpoint(os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename))
+    torch.save(model.state_dict(), os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename) + ".pth")
+    model.eval()
+    dummy_input = torch.randn(1, 3, 50, 50)
+    torch.onnx.export(
+        model, 
+        dummy_input, 
+        os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename) + ".onnx", 
+        input_names=["input"], 
+        output_names=["output"], 
+        dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},  # Opțional: suport pentru batch-uri dinamice
+        opset_version=11  # Ajustează versiunea dacă e necesar
+    )
+    
+    print("done.")
+    
 if __name__ == "__main__":
     train_model()
-    

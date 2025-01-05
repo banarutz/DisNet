@@ -32,20 +32,20 @@ class DnCNN(LightningModule):
         noisy, clean = batch
         denoised = self(noisy)
         loss = nn.MSELoss()(denoised, clean)
-        self.log('train_loss', loss)
+        self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         noisy, clean = batch
         denoised = self(noisy)
         loss = nn.MSELoss()(denoised, clean)
-        self.log('val_loss', loss)
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True)
         psnr = 10 * torch.log10(1 / loss)  # Calculul PSNR
-        self.log('val_psnr', psnr, prog_bar=True)
+        self.log('val_psnr', psnr, prog_bar=True, logger=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.75)
         return {
             'optimizer': optimizer,
             'lr_scheduler': lr_scheduler
