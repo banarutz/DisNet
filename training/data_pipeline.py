@@ -48,6 +48,7 @@ class CustomImageDataset(Dataset):
         """
         Returnează numărul de perechi de patch-uri.
         """
+
         return len(self.gt_files)
     
     def __getitem__(self, idx):
@@ -59,7 +60,7 @@ class CustomImageDataset(Dataset):
 
         gt_patch = np.load(gt_file_path)
         noisy_patch = np.load(noisy_file_path)
-        
+              
         if self.transform:
             gt_patch = self.transform(gt_patch)
             noisy_patch = self.transform(noisy_patch)

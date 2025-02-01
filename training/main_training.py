@@ -13,19 +13,19 @@ from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 import subprocess
 
-from net_architecture import DnCNN
+from net_architecture import DnCNN, EncoderDecoderDenoising
 from data_pipeline import CustomImageDataset 
 from utils import *
 
 
-@hydra.main(config_path="../configs", config_name="DnCNN_SIDD_small_50x50_experiment_1")
+@hydra.main(config_path="../configs", config_name="EDD_SIDD_small_50x50_experiment_1")
 def train_model(cfg):
     seed_everything(cfg.training.seed)
 
     # Define transformations
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        # transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     # Create data loaders
@@ -36,12 +36,7 @@ def train_model(cfg):
     val_loader = DataLoader(val_dataset, batch_size=cfg.training.batch_size, num_workers=cfg.training.num_workers)
 
     # Initialize the model
-    if cfg.data.resume:
-        print(f"Resuming training from checkpoint: {cfg.data.resume}")
-        model = DnCNN.load_from_checkpoint(cfg.data.resume, strict=False)
-    else:
-        print("Starting training from scratch.")
-        model = DnCNN(cfg.model)
+    model = model_picker(cfg)
 
     # Initialize MLFlow logger
     if is_port_in_use(cfg.mlflow.host, cfg.mlflow.port):
@@ -63,8 +58,8 @@ def train_model(cfg):
         dirpath=os.path.join(hydra.utils.get_original_cwd(), cfg.checkpoint.path),
         save_top_k=1,
         verbose=True,
-        monitor='val_loss',
-        mode='min',
+        monitor='val_psnr',
+        mode='max',
     )
 
     # Initialize LR monitor
@@ -79,20 +74,21 @@ def train_model(cfg):
         devices=1 if torch.cuda.is_available() else None,
         accelerator="gpu",
         callbacks=[checkpoint_callback, lr_monitor],
+        num_sanity_val_steps=0
     )
     trainer.fit(model, train_loader, val_loader)
     
     print("----------------- Training finished -----------------")
     print("----------------- Exporting model -----------------")
     
-    model = DnCNN.load_from_checkpoint(os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename))
-    torch.save(model.state_dict(), os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename) + ".pth")
+    model = DnCNN.load_from_checkpoint(os.path.join(cfg.checkpoint.path, cfg.checkpoint.filename))
+    torch.save(model.state_dict(), os.path.join(cfg.checkpoint.path, cfg.checkpoint.filename).split(".")[0] + ".pt")
     model.eval()
     dummy_input = torch.randn(1, 3, 50, 50)
     torch.onnx.export(
         model, 
         dummy_input, 
-        os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename) + ".onnx", 
+        os.path.join(cfg.checkpoint.path + cfg.checkpoint.filename).split(".")[0] + ".onnx", 
         input_names=["input"], 
         output_names=["output"], 
         dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},  # Opțional: suport pentru batch-uri dinamice

@@ -8,7 +8,7 @@ training:
   seed: 69
 
 model:
-  learning_rate: 0.0005
+  learning_rate: 0.001
 
 checkpoint:
   path: saved_models/

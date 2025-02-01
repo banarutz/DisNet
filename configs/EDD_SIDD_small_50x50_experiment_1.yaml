@@ -3,21 +3,20 @@ data:
   resume: False
   
 training:
-  net_type: DnCNN
+  net_type: EDD
   batch_size: 32
   max_epochs: 32
   seed: 69
   num_workers: 12
 
 model:
-  num_layers: 17
   learning_rate: 0.001
 
 checkpoint:
   path: saved_models/
-  filename: best_model-v7.ckpt
+  filename: best_model-v4.ckpt
 
-experiment_name: DnCNN_SIDD_small_50x50_experiment_1
+experiment_name: EDD_SIDD_small_50x50_experiment_1
 
 mlflow:
    tracking_uri: http://127.0.0.1:8082
