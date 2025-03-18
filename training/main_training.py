@@ -18,7 +18,7 @@ from data_pipeline import CustomImageDataset
 from utils import *
 
 
-@hydra.main(config_path="../configs", config_name="EDD_SIDD_small_50x50_experiment_1")
+@hydra.main(config_path="../configs", config_name="DeVit_SIDD_small_50x50_experiment_1")
 def train_model(cfg):
     seed_everything(cfg.training.seed)
 
@@ -45,7 +45,7 @@ def train_model(cfg):
     else:
         print("Starting MLFlow server.")
         try:
-            subprocess.Popen(["mlflow", "server", "--host", "127.0.0.1", "--port", "8082"])
+            subprocess.Popen(["/home/smbanaru/Desktop/DisNet/venv/bin/mlflow", "server", "--host", "127.0.0.1", "--port", "8083"])
             mlflow_logger = MLFlowLogger(experiment_name=cfg.experiment_name, tracking_uri=cfg.mlflow.tracking_uri)
             mlflow_logger.log_hyperparams(cfg)
         except Exception as e:

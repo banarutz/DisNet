@@ -1,5 +1,5 @@
 import socket
-from net_architecture import DnCNN, EncoderDecoderDenoising
+from net_architecture import DnCNN, EncoderDecoderDenoising, TransformerEncoderDecoderDenoising
 
 def is_port_in_use(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -22,6 +22,12 @@ def model_picker(cfg):
     elif cfg.training.net_type == "DnCNN" and not cfg.data.resume:
         print(f"Starting training from scratch. Used architecture: {cfg.training.net_type}.")
         model = DnCNN(cfg.model)
+    elif cfg.training.net_type == "DeVit" and cfg.data.resume:
+        print(f"Resuming training from checkpoint: {cfg.data.resume}. Used architecture: {cfg.training.net_type}.")
+        model = TransformerEncoderDecoderDenoising.load_from_checkpoint(cfg.data.resume, strict=True)
+    elif cfg.training.net_type == "DeVit" and not cfg.data.resume:
+        print(f"Starting training from scratch. Used architecture: {cfg.training.net_type}.")
+        model = TransformerEncoderDecoderDenoising(cfg.model)
     
     return model
         
